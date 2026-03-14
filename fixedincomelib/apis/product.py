@@ -1,5 +1,6 @@
 import pickle
 from typing import List, Optional
+
 from fixedincomelib.date import *
 from fixedincomelib.market import *
 from fixedincomelib.product import *
@@ -25,9 +26,9 @@ def qfWriteProductToFile(product: Product, path: str):
 def qfReadProductFromFile(path: str):
     with open(path, "rb") as handle:
         this_dict = pickle.load(handle)
-        prod_type = this_dict["TYPE"]
-        func = ProductBuilderRegistry().get(f"{prod_type}_DES")
-        return func(this_dict)
+    prod_type = this_dict["TYPE"]
+    func = ProductBuilderRegistry().get(f"{prod_type}_DES")
+    return func(this_dict)
 
 
 def qfCreateProductFromDataConvention(
@@ -46,11 +47,9 @@ def qfCreateProductBulletCashflow(
     long_or_short: str,
     payment_date: Optional[str] = "",
 ):
-
     pay_date = None
     if payment_date != "":
         pay_date = Date(payment_date)
-
     return ProductBulletCashflow(
         Date(termination_date),
         Currency(currency),
@@ -70,7 +69,6 @@ def qfCreateProducFixedAccrued(
     business_day_convention: Optional[str] = "",
     holiday_convention: Optional[str] = "",
 ):
-
     pay_date = None
     if payment_date != "":
         pay_date = Date(payment_date)
@@ -104,11 +102,9 @@ def qfCreateProductOvernightIndexCashflow(
     spread: Optional[float] = 0.0,
     payment_date: Optional[str] = "",
 ):
-
     pay_date = None
     if payment_date != "":
         pay_date = Date(payment_date)
-
     return ProductOvernightIndexCashflow(
         Date(effective_date),
         TermOrTerminationDate(term_or_terminatino_date),
@@ -128,7 +124,6 @@ def qfCreateProductRFRFuture(
     amount: float,
     strike: Optional[float] = 0.0,
 ):
-
     return ProductRFRFuture(
         Date(effective_date),
         TermOrTerminationDate(term_or_termination_date),
@@ -155,7 +150,6 @@ def qfCreateProductRFRSwap(
     spread: Optional[float] = 0.0,
     compounding_method: Optional[str] = "compound",
 ):
-
     if floating_leg_accrual_period == "":
         floating_leg_accrual_period = accrual_period
 
@@ -177,23 +171,59 @@ def qfCreateProductRFRSwap(
     )
 
 
-## TODO: Implement qfCreateProductOvernightIndexBasisSwap
+## Assignment 6: Implement qfCreateProductOvernightIndexBasisSwap
+def qfCreateProductOvernightIndexBasisSwap(
+    effective_date: str,
+    term_or_termination_date: str,
+    payment_off_set: str,
+    on_index_1: str,
+    on_index_2: str,
+    spread_over_leg_1: float,
+    pay_or_rec_leg_1: str,
+    notional: float,
+    accrual_period_1: str,
+    accrual_period_2: Optional[str] = "",
+    accrual_basis: str = "ACT/360",
+    pay_business_day_convention: Optional[str] = "F",
+    pay_holiday_convention: Optional[str] = "USGS",
+    compounding_method: Optional[str] = "compound",
+):
+    """Create an overnight-index basis swap.
+
+    Leg 1 is the basis leg: overnight index 1 plus spread_over_leg_1.
+    Leg 2 is the reference overnight-index leg.  pay_or_rec_leg_1 is
+    expressed from the perspective of Leg 1.
+    """
+    if accrual_period_2 == "":
+        accrual_period_2 = accrual_period_1
+
+    return ProductOvernightIndexBasisSwap(
+        Date(effective_date),
+        TermOrTerminationDate(term_or_termination_date),
+        Period(payment_off_set),
+        on_index_1,
+        on_index_2,
+        spread_over_leg_1,
+        PayOrReceive(pay_or_rec_leg_1),
+        notional,
+        Period(accrual_period_1),
+        AccrualBasis(accrual_basis),
+        Period(accrual_period_2),
+        BusinessDayConvention(pay_business_day_convention),
+        HolidayConvention(pay_holiday_convention),
+        CompoundingMethod.from_string(compounding_method),
+    )
 
 
 def qfCreateBondSpecs(key: str, parameters: dict) -> BondSpecs:
-
-    # check if exists
-    # if not, register(), and get()
-
-    # otherwise, get()
     if not BondSpecsRegistry().exists(key):
         BondSpecsRegistry().register(key, parameters)
-
     return BondSpecsRegistry().get(key)
 
 
-def qfCreateProductBond(name: str, trade_date: str, buy_sell: str, trade: float) -> ProductBond:
-
+def qfCreateProductBond(
+    name: str, trade_date: str, buy_sell: str, trade: float
+) -> ProductBond:
     bond_specs = BondSpecsRegistry().get(name)
     return ProductBond(
         name=name,
@@ -221,7 +251,6 @@ def qfCreateProductFXForward(
     holiday_convention: Optional[str] = "",
     pay_offset: Optional[str] = "0D",
 ):
-
     business_day_convention_obj = BusinessDayConvention("F")
     if business_day_convention != "":
         business_day_convention_obj = BusinessDayConvention(business_day_convention)
